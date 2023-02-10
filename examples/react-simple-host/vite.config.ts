@@ -12,7 +12,8 @@ export default defineConfig({
       app: {
         name: "react-simple-host",
         remotes: {
-          "react-simple-remote": "http://localhost:3000",
+          "react-simple-remote":
+            "http://localhost:3000/react-simple-remote/custom-federation.json",
         },
         shared: ["react", "react-dom"],
       },

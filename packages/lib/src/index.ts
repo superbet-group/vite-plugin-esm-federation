@@ -1,13 +1,14 @@
-import { type Plugin } from "vite";
+import { UserConfig, type Plugin } from "vite";
 import MagicString from "magic-string";
 import { init, parse } from "es-module-lexer";
 import * as path from "path";
-import { isAbsolute, relative } from "path";
+import { isAbsolute, join, relative } from "path";
 
 import { hash } from "./hash";
 
 export type PluginOptions = {
   splitCommonModules?: boolean;
+  fileName?: string;
   app: AppConfig;
 };
 
@@ -68,7 +69,11 @@ const createCssImport = (urls: string[]) => {
 // The resolution for each shared module is based on whether another module already shares that module
 // if it is already shared, we resolve that module to the shared module
 // if it isn't, we resolve it to the module provided by the remote
-const federationDiscoverScript = (name: string) => `(() => {
+const federationDiscoverScript = (
+  name: string,
+  base: string,
+  fileName: string
+) => `(() => {
   const syncFetch = (url) => {
     let xhr = new XMLHttpRequest();
     xhr.open("GET", url, false);
@@ -77,16 +82,27 @@ const federationDiscoverScript = (name: string) => `(() => {
   };
 
   const discover = (name, path, modules = {}) => {
-    const manifest = syncFetch(path + "/federation.json");
-    modules[name] = manifest;
-    manifest.path = path;
-    Object.entries(manifest.remotes).forEach(([name, path]) => {
-      discover(name, path, modules);
-    });
-    return modules;
+    try {
+      const manifest = syncFetch(path);
+      modules[name] = manifest;
+      manifest.path = path;
+      Object.entries(manifest.remotes).forEach(([name, path]) => {
+        if (path.startsWith("exp:")) {
+          path = eval(path.slice(4));
+        }
+        discover(name, path, modules);
+      });
+      return modules;
+    } catch(e) {
+      console.warn("Failed to discover federation modules", e);
+      return modules;
+    }
   };
 
-  const modules = discover("${name}", window.location.origin);
+  const modules = discover("${name}", window.location.origin + "${join(
+  base,
+  fileName
+)}");
 
   const importMap = {
     imports: {},
@@ -104,7 +120,7 @@ const federationDiscoverScript = (name: string) => `(() => {
   const importMapScript = document.createElement("script");
   importMapScript.type = "importmap";
   importMapScript.innerHTML = JSON.stringify(importMap);
-  document.head.appendChild(importMapScript);
+  document.currentScript.after(importMapScript);
 })()`;
 
 type FederationJson = {
@@ -132,8 +148,10 @@ const isCssSource = (source: string) => {
 export const esmFederation = ({
   app: { name, exposes = {}, shared = [], remotes = {} },
   splitCommonModules = false,
+  fileName = "federation.json",
 }: PluginOptions): Plugin => {
   const cssImportingModules = new Map<string, Set<string>>();
+  let userConfig: UserConfig;
   return {
     name: "esm-federation",
     enforce: "pre",
@@ -147,13 +165,19 @@ export const esmFederation = ({
       }
     },
     transformIndexHtml(html) {
+      // discover script is injected before the first module script
       return html.replace(
-        "<head>",
-        `<head><script>${federationDiscoverScript(name)}</script>`
+        '<script type="module"',
+        `<script>${federationDiscoverScript(
+          name,
+          userConfig.base || "/",
+          fileName
+        )}</script><script type="module"`
       );
     },
     async config(baseConfig) {
       await init;
+      userConfig = baseConfig;
 
       const external = (id: string) => {
         if (remotes[id.split("/")[0]]) {
@@ -327,7 +351,7 @@ export const esmFederation = ({
       });
       this.emitFile({
         type: "asset",
-        fileName: "federation.json",
+        fileName,
         source: createFederationJson(
           name,
           remotes,

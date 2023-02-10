@@ -17,27 +17,130 @@ npm install --save-dev @happening/vite-plugin-esm-federation
 ```js
 // vite.config.js
 import { defineConfig } from "vite";
-import esmFederation from "@happening/vite-plugin-esm-federation";
+import { esmFederation } from "@happening/vite-plugin-esm-federation";
 
 export default defineConfig({
   plugins: [
     esmFederation({
-      name: "name-of-your-app", // required
-      shared: ["react", "react-dom"], // these dependencies will be shared with other apps
-      remotes: {
-        "name-of-remote-app": "https://remote-app.com/", // federation file will be loaded from https://remote-app.com/federation.json
-      },
-      exposes: {
-        Button: "./src/components/Button", // ./src/components/Button will be exposed as name-of-your-app/Button
+      fileName: "federation.json", // this is the default, but you can customise it
+      app: {
+        name: "name-of-your-app", // required
+        shared: ["react", "react-dom"], // these dependencies will be shared with other apps
+        remotes: {
+          "name-of-remote-app": "https://remote-app.com/federation.json", // the URI of the JSON file
+        },
+        exposes: {
+          Button: "./src/components/Button", // ./src/components/Button will be exposed as name-of-your-app/Button
+        },
       },
     }),
   ],
 });
 ```
 
+In your app code:
+
+```js
+import { someFeature } from "name-of-remote-app/some-feature";
+```
+
+Your remote app config should look something like this:
+
+```js
+import { defineConfig } from "vite";
+import { esmFederation } from "@happening/vite-plugin-esm-federation";
+
+export default defineConfig({
+  plugins: [
+    esmFederation({
+      app: {
+        name: "name-of-remote-app",
+        shared: ["react", "react-dom"],
+        exposes: {
+          "some-feature": "./src/some-feature.js",
+        },
+      },
+    }),
+  ],
+});
+```
+
+## Using expressions to resolve remotes
+
+You can use expressions to resolve the remote app's URL. This is useful if you want to use the same config for multiple environments. For example, you can use some property on `window` to determine the URL of the remote app. You can even make HTTP requests, but they need to be synchronous so as to not start loading modules before the module graph is resolved.
+
+```js
+// vite.config.js
+import { defineConfig } from "vite";
+import { esmFederation } from "@happening/vite-plugin-esm-federation";
+
+export default defineConfig({
+  plugins: [
+    esmFederation({
+      app: {
+        name: "name-of-your-app",
+        remotes: {
+          "name-of-remote-app": "exp:window.env.REMOTE_APP_URL",
+          "fetched-remote":
+            // this performs a `GET` request to `https://my-env-service.com/name-of-your-app`
+            // you could also use a custom implementation of `fetch` here
+            'exp:syncFetch("https://my-env-service.com/name-of-your-app").REMOTE_APP_URL',
+        },
+      },
+    }),
+  ],
+});
+```
+
+You can even implement a custom fetcher function that abstracts away you fetch logic. This will then be evaluated while building the dependency graph.
+
+```js
+// vite.config.js
+import { defineConfig } from "vite";
+import { esmFederation } from "@happening/vite-plugin-esm-federation";
+
+const customFetch = (url) => `(() => {
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", "${url}", false);
+  // add headers
+  xhr.setRequestHeader("x-requested-by", "custom-fetcher");
+  xhr.send();
+  return JSON.parse(xhr.responseText);
+})()`;
+
+export default defineConfig({
+  plugins: [
+    esmFederation({
+      app: {
+        name: "name-of-your-app",
+        remotes: {
+          "custom-fetched-remote": customFetch(
+            "https://url-of-custom-remote.com/federation.json"
+          ),
+        },
+      },
+    }),
+  ],
+});
+```
+
+Keep in mind that each of these fetch calls are and need to be blocking, to make sure that the first module only loads after the graph is resolved. When browsers start adding support for dynamic import maps, this limitation can go away.
+
 You can both expose and consume modules within the same app and the plugin will handle the correct order of loading.
 
 ## Options
+
+### `fileName`
+
+Type: `string`
+
+Default: `federation.json`
+
+Required: `false`
+
+The name of the JSON file that will be generated. This file will be used to resolve the module graph.
+
+## Options `.app`
 
 ### `name`
 
@@ -83,3 +186,7 @@ To get around limitations, you should share as little dependencies as you can. I
 ## License
 
 MIT © [Happening](https://happening.xyz)
+
+```
+
+```
