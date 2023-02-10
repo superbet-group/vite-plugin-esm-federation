@@ -11,6 +11,9 @@
       "require": "./dist/index.cjs"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w"
