@@ -1,0 +1,21 @@
+{
+  "name": "react-simple-remote",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview --port 3000"
+  },
+  "dependencies": {
+    "antd": "4.18.6",
+    "vite": "4.1.0",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "@happening/vite-plugin-esm-federation": "workspace:*",
+    "@vitejs/plugin-react": "3.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "17.0.33",
+    "@types/react-dom": "17.0.10"
+  }
+}
