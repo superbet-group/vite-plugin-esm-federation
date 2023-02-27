@@ -1,5 +1,16 @@
 {
+  "include": [
+    "src/**/*"
+  ],
   "compilerOptions": {
+    "rootDir": ".",
+    "module": "ESNext",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "outDir": "dist",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
     "target": "ESNext",
     "lib": [
       "ESNext",
@@ -7,5 +18,5 @@
       "DOM.Iterable"
     ],
     "moduleResolution": "node"
-  }
+  },
 }

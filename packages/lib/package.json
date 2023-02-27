@@ -3,7 +3,11 @@
   "version": "0.0.2",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
-  "types": "./types/index.d.ts",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "types"
+  ],
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
@@ -15,7 +19,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c & tsc",
     "dev": "rollup -c -w"
   },
   "dependencies": {
@@ -24,12 +28,13 @@
   },
   "devDependencies": {
     "@types/node": "18.11.18",
-    "rollup": "3.12.1",
+    "rollup": "3.17.2",
     "@rollup/plugin-commonjs": "24.0.1",
     "@rollup/plugin-node-resolve": "15.0.1",
     "@rollup/plugin-typescript": "11.0.0",
+    "@rollup/plugin-json": "6.0.0",
     "typescript": "4.9.5",
     "tslib": "2.5.0",
-    "vite": "4.1.0"
+    "vite": "4.1.4"
   }
 }

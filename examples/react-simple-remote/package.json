@@ -2,13 +2,14 @@
   "name": "react-simple-remote",
   "private": true,
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3000",
     "build": "vite build",
-    "serve": "vite preview --port 3000"
+    "serve": "vite preview --port 3000",
+    "dev:mf": "vite build --watch & vite preview --port 3000"
   },
   "dependencies": {
     "antd": "4.18.6",
-    "vite": "4.1.0",
+    "vite": "4.1.4",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "@happening/vite-plugin-esm-federation": "workspace:*",

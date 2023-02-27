@@ -1,19 +1,38 @@
 import { Button, Layout } from "antd";
+import { Component, lazy, Suspense } from "react";
 import { render } from "react-dom";
 
 import "antd/dist/antd.css";
 
-// import { FederatedComponent } from "react-simple-remote/federated";
+import styles from "./index.module.css";
 
+// import { FederatedComponent } from "react-simple-remote/federated";
 const FederatedComponent = lazy(() =>
   import("react-simple-remote/federated").then(({ FederatedComponent }) => ({
     default: FederatedComponent,
   }))
 );
 
-import styles from "./index.module.css";
-import { lazy } from "react";
-import { Suspense } from "react";
+class ErrorBoundary extends Component {
+  state = { error: null };
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div>
+          <h1>Something went wrong.</h1>
+          <pre>{this.state.error.message}</pre>
+        </div>
+      );
+    }
+
+    return <>{this.props.children}</>;
+  }
+}
 
 const Host = () => {
   return (
@@ -31,9 +50,11 @@ const Host = () => {
       </Layout.Header>
       <Layout.Content className={styles.content}>
         <div>Hello World</div>
-        <Suspense fallback={<div>Loading...</div>}>
-          <FederatedComponent />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<div>Loading...</div>}>
+            <FederatedComponent />
+          </Suspense>
+        </ErrorBoundary>
       </Layout.Content>
       <Layout.Footer>
         <div>Footer</div>
