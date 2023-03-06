@@ -96,20 +96,16 @@ export const prodPlugin = ({
         };
       }
     },
-    transformIndexHtml() {
-      return [
-        {
-          tag: "script",
-          attrs: {
-            id: "__esm_federation_discover",
-          },
-          children: federationDiscoverScript(
-            name,
-            userConfig.base || "/",
-            fileName
-          ),
-        },
-      ];
+    transformIndexHtml(html) {
+      // discover script is injected before the first module script
+      return html.replace(
+        '<script type="module"',
+        `<script>${federationDiscoverScript(
+          name,
+          userConfig.base || "/",
+          fileName
+        )}</script><script type="module"`
+      );
     },
     async config(baseConfig) {
       await init;
