@@ -88,8 +88,8 @@ export const prodPlugin = ({
         }
       }
 
-      const match = source.match(sharedModuleRegex);
-      if (match) {
+      const isSharedOrExposed = sharedOrExposedModuleRegex.test(source);
+      if (isSharedOrExposed) {
         return {
           id: source,
           moduleSideEffects: "no-treeshake",
