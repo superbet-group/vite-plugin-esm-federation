@@ -117,7 +117,7 @@ export const devPlugin = ({
       if (match) {
         const moduleName = deNormaliseModuleName(match[1]);
         if (shared.includes(moduleName)) {
-          imports.set(moduleName, joinLoose(userConfig.base, source));
+          imports.set(moduleName, source);
         }
       }
 

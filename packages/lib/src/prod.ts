@@ -52,12 +52,6 @@ const createCssImport = (urls: string[]) => {
     .join(",")}]);`;
 };
 
-const createImportMap = (imports: Record<string, string>) => {
-  return JSON.stringify({
-    imports,
-  });
-};
-
 export const prodPlugin = ({
   app: { name, remotes = {}, shared = [], exposes = {} },
   fileName = "federation.json",
