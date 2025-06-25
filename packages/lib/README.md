@@ -12,6 +12,8 @@ This plugin leverages the native EcmaScript Module system in modern browsers to 
 npm install --save-dev @happening/vite-plugin-esm-federation
 ```
 
+**Compatibility**: This plugin supports Vite v4, v5, and v6+.
+
 ## Usage
 
 ```js
@@ -64,6 +66,58 @@ export default defineConfig({
   ],
 });
 ```
+
+## How Shared Dependencies Work
+
+When you configure `shared` dependencies in your federation setup, the plugin ensures that these dependencies are handled correctly to prevent version conflicts and duplicate loading across microfrontends.
+
+### The `window.__ESM_FEDERATION_SHARED` Global
+
+The plugin automatically injects a global variable `window.__ESM_FEDERATION_SHARED` into the host application's HTML. This variable contains an array of the shared dependency names you've configured:
+
+```javascript
+// Automatically injected by the plugin
+window.__ESM_FEDERATION_SHARED = ["react", "react-dom"];
+```
+
+### How It Prevents Duplicate Dependencies
+
+This global variable is used by the federation discovery script to exclude shared dependencies from the import map:
+
+1. **Host app** bundles shared dependencies locally (via Vite)
+2. **Federation discovery script** checks `window.__ESM_FEDERATION_SHARED` when building the import map
+3. **Shared dependencies are excluded** from the import map, forcing the browser to use the host's bundled versions
+4. **Remote microfrontends** automatically use the host's shared instances instead of loading their own
+
+### Example
+
+With this configuration:
+```js
+// Host app config
+shared: ["react", "react-dom"]
+```
+
+The generated import map will look like:
+```json
+{
+  "imports": {
+    "remote-app/Button": "http://localhost:3000/some-path/Button.js"
+    // Notice: NO "react" or "react-dom" entries!
+  }
+}
+```
+
+This ensures a **single, shared React instance** across all microfrontends, preventing the common "multiple React instances" error and reducing bundle sizes.
+
+### Vite v6+ Compatibility
+
+This plugin has been updated to work seamlessly with Vite v6+, which introduced changes to how dependencies are resolved and chunked. The plugin now:
+
+- Correctly handles shared dependencies in Vite v6+'s new dependency resolution system
+- Prevents module resolution errors like `Failed to resolve module specifier "react-dom"`
+- Maintains backward compatibility with Vite v4 and v5
+
+No configuration changes are required when upgrading from older Vite versions.
 
 ## Using expressions to resolve remotes
 
@@ -178,11 +232,13 @@ An object of modules that should be exposed. The key is the name of the exposed 
 
 Dealing with shared modules is always difficult, especially within the `vite`/`rollup` ecosystem. The following limitations are known:
 
-- Treeshaking will affect your shared dependencies, so even though you share a given dependency, it might not necessarily come with the same code as the remote app expects. This is because if the host app doesn't use a particular import from the shared dependency, it will be removed from the bundle. We don't know at build time what exports the remote app will require. To work around this, you can try explicitly importing and using exports that are removed by treeshaking. This will force the dependency to be included in the bundle.
-- It is your responsibility to make sure that dependencies are up to date and in sync between the host app and the remote app. This is especially important for shared dependencies. If you use a shared dependency that is not up to date, you might get unexpected results, but you should expect your code to fail at runtime.
-- Dev mode is tricky. Some frameworks will run just fine and vanilla JS will work, however React has an entirely different runtime in development and production mode, which means it's impossible to consolidate between them. Development runtime paired with another development runtime should technically be possible, however it won't work as one would expect, because of React Refresh and its dependecy on locality.
+- **Treeshaking**: Will affect your shared dependencies, so even though you share a given dependency, it might not necessarily come with the same code as the remote app expects. This is because if the host app doesn't use a particular import from the shared dependency, it will be removed from the bundle. We don't know at build time what exports the remote app will require. To work around this, you can try explicitly importing and using exports that are removed by treeshaking. This will force the dependency to be included in the bundle.
 
-To get around limitations, you should share as little dependencies as you can. It's best for each federated module to own as much of its code as possible, even if it produces larger bundle sizes.
+- **Version synchronization**: It is your responsibility to make sure that dependencies are up to date and in sync between the host app and the remote app. This is especially important for shared dependencies. If you use a shared dependency that is not up to date, you might get unexpected results, but you should expect your code to fail at runtime.
+
+- **Development mode considerations**: While development mode works across Vite versions (v4, v5, v6+), React in particular has different runtime behaviors between development and production modes. When federating React applications, ensure all applications are running in the same mode (all dev or all production) for optimal compatibility. React Refresh and its dependency on locality can cause issues when mixing development and production builds.
+
+To get around these limitations, you should share as little dependencies as you can. It's best for each federated module to own as much of its code as possible, even if it produces larger bundle sizes.
 
 ## License
 
