@@ -67,10 +67,6 @@ export default defineConfig({
 });
 ```
 
-## How Shared Dependencies Work
-
-When you configure `shared` dependencies in your federation setup, the plugin ensures that these dependencies are handled correctly to prevent version conflicts and duplicate loading across microfrontends.
-
 ### The `window.__ESM_FEDERATION_SHARED` Global
 
 The plugin automatically injects a global variable `window.__ESM_FEDERATION_SHARED` into the host application's HTML. This variable contains an array of the shared dependency names you've configured:
@@ -108,16 +104,6 @@ The generated import map will look like:
 ```
 
 This ensures a **single, shared React instance** across all microfrontends, preventing the common "multiple React instances" error and reducing bundle sizes.
-
-### Vite v6+ Compatibility
-
-This plugin has been updated to work seamlessly with Vite v6+, which introduced changes to how dependencies are resolved and chunked. The plugin now:
-
-- Correctly handles shared dependencies in Vite v6+'s new dependency resolution system
-- Prevents module resolution errors like `Failed to resolve module specifier "react-dom"`
-- Maintains backward compatibility with Vite v4 and v5
-
-No configuration changes are required when upgrading from older Vite versions.
 
 ## Using expressions to resolve remotes
 
