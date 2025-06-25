@@ -1,20 +1,17 @@
 {
-  "name": "vite-plugin-esm-federation",
-  "private": true,
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "workspaces": [
-    "examples/*",
-    "packages/*"
-  ],
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "react-simple-remote": "workspace:*"
-  }
+    "name": "vite-plugin-esm-federation",
+    "private": true,
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "workspaces": [
+        "examples/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
 }
