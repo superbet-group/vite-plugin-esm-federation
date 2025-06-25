@@ -35,6 +35,13 @@ export const exposedModuleRegex = /(\.?\.\/)*__esm_exposed_(.+)-[\d\w]+\.js/;
 
 export const sharedOrExposedModuleRegex = /(\.?\.\/)*(?:__esm_shared_|__esm_exposed_)(.+)-[\d\w]+\.js/;
 
+// This script gets injected into the top of the head in the HTML page of the host app.
+// It takes the remotes defined in the host app's config and fetches each remote's config.
+// For every manifest, it recurses through the remotes and merges their configs into a single object.
+// This object is then iterated over and each remote's shared modules are added to the import map.
+// The resolution for each shared module is based on whether another module already shares that module
+// if it is already shared, we resolve that module to the shared module
+// if it isn't, we resolve it to the module provided by the remote
 export const federationDiscoverScript = (name: string, base: string, fileName: string) => `(() => {
   const stripLeadingAndTrailingSlashes = (str) => str.replace(/^\\/+|\\/+$/g, "");
   const join = (...paths) => paths.filter(Boolean).map(stripLeadingAndTrailingSlashes).join("/");
